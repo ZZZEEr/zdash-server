@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  zdash-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zdash-server
+    restart: unless-stopped
+    ports:
+      - "${ZDASH_PORT:-8850}:8850"
+    volumes:
+      - zdash-data:/app/data
+    environment:
+      - ZDASH_DB_PATH=/app/data/zdash.db
+      - ZDASH_LOG_LEVEL=${ZDASH_LOG_LEVEL:-INFO}
+      - ZDASH_CORS_ORIGINS=${ZDASH_CORS_ORIGINS:-*}
+      - ZDASH_DB_POOL_SIZE=${ZDASH_DB_POOL_SIZE:-5}
+      - TZ=${TZ:-UTC}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "2.0"
+        reservations:
+          memory: 256M
+          cpus: "1.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8850/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries
